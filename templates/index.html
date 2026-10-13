@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vinted order CO2 emissions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Vinted order CO2 emissions</h1>
+      <p class="subtitle">
+        Every order is routed from the seller's city to a reference city and
+        converted to truck CO2 emissions.
+      </p>
+
+      <form id="calc-form" class="card" autocomplete="off">
+        <label for="city">Reference city (Germany)</label>
+        <div class="row">
+          <div class="combobox">
+            <input
+              id="city"
+              name="city"
+              type="text"
+              placeholder="Start typing a city, e.g. Tübingen…"
+              role="combobox"
+              aria-expanded="false"
+              aria-controls="suggestions"
+              aria-autocomplete="list"
+              required
+            />
+            <ul id="suggestions" class="suggestions hidden" role="listbox"></ul>
+          </div>
+          <button id="submit" type="submit" disabled>Calculate</button>
+        </div>
+        <input type="hidden" id="city-id" />
+        <p id="message" class="message" role="status"></p>
+      </form>
+
+      <section id="progress-wrap" class="card hidden">
+        <div class="progress">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <p id="progress-text" class="message"></p>
+      </section>
+
+      <section id="results" class="hidden">
+        <div class="totals">
+          <div class="stat">
+            <span class="stat-value" id="stat-orders">–</span>
+            <span class="stat-label">Orders routed</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-distance">–</span>
+            <span class="stat-label">Total distance (km)</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-co2">–</span>
+            <span class="stat-label">Total CO2 (kg)</span>
+          </div>
+        </div>
+
+        <h2 id="results-title">Orders</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Seller city</th>
+                <th class="num">Route (km)</th>
+                <th class="num">CO2 (kg)</th>
+              </tr>
+            </thead>
+            <tbody id="orders-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

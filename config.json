@@ -8,6 +8,10 @@
   "nominatim_user_agent": "vinted-co2-emissions/0.1 (personal project; contact: none)",
   "geocode_min_interval_seconds": 1.1,
 
+  "geonames_germany_url": "https://download.geonames.org/export/dump/DE.zip",
+  "geonames_admin1_url": "https://download.geonames.org/export/dump/admin1CodesASCII.txt",
+  "cities_dataset": "data/de_cities.json",
+
   "osrm_base_url": "https://router.project-osrm.org",
   "osrm_profile": "driving",
   "route_min_interval_seconds": 0.3,

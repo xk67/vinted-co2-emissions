@@ -26,6 +26,7 @@ def load_config():
 
     config["cache_dir"] = ROOT / config["cache_dir"]
     config["data_dir"] = ROOT / config["data_dir"]
+    config["cities_dataset"] = ROOT / config["cities_dataset"]
     config["cache_dir"].mkdir(parents=True, exist_ok=True)
     config["data_dir"].mkdir(parents=True, exist_ok=True)
     return config

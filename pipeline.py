@@ -1,7 +1,7 @@
 import argparse
 import datetime
-import json
 
+import jsonstore
 from config import load_config
 from emissions import co2_kg, summarize
 from geo import Geocoder
@@ -27,10 +27,11 @@ def location_query(seller):
 
 def load_conversation(client, conversation_id, cache_dir):
     cache_file = cache_dir / f"{conversation_id}.json"
-    if cache_file.exists():
-        return json.loads(cache_file.read_text())
+    cached = jsonstore.load(cache_file, None)
+    if cached is not None:
+        return cached
     conversation = client.fetch_conversation(conversation_id)
-    cache_file.write_text(json.dumps(conversation, ensure_ascii=False))
+    jsonstore.save(cache_file, conversation)
     return conversation
 
 
@@ -62,33 +63,36 @@ def build_record(order, seller, seller_fix, route, factor):
     return record
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Compute CO2 emissions for Vinted orders."
-    )
-    parser.add_argument(
-        "fixed_location",
-        help="reference location every order is routed to (e.g. 'Tübingen, DE' or '48.52,9.05')",
-    )
-    args = parser.parse_args()
+def run_pipeline(fixed_location, config=None, on_progress=None, fixed_point=None):
+    """Run the full calculation and return the emissions payload.
 
-    config = load_config()
+    on_progress, if given, is called as on_progress(message, current, total).
+    fixed_point, if given, is a resolved {'lat','lon','display_name'} and skips
+    geocoding the reference location.
+    """
+    config = config or load_config()
     factor = config["truck_factor_kg_per_km"]
+
+    def emit(message, current=None, total=None):
+        if on_progress:
+            on_progress(message, current, total)
 
     client = VintedClient(config)
     geocoder = Geocoder(config)
     router = Router(config)
 
-    fixed = geocoder.geocode(args.fixed_location)
-    if not fixed:
-        raise SystemExit(f"Could not geocode fixed location: {args.fixed_location!r}")
-    print(f"Fixed location: {fixed['display_name']} ({fixed['lat']}, {fixed['lon']})")
+    if fixed_point is not None:
+        fixed = fixed_point
+        emit(f"Fixed location: {fixed.get('display_name', fixed_location)}")
+    else:
+        fixed = geocoder.geocode(fixed_location)
+        if not fixed:
+            raise ValueError(f"Could not geocode fixed location: {fixed_location!r}")
+        emit(f"Fixed location: {fixed['display_name']}")
 
     orders, pagination = client.fetch_orders()
-    print(
-        f"Fetched {len(orders)} orders "
-        f"(total_entries={pagination.get('total_entries')})"
-    )
+    total_orders = len(orders)
+    emit(f"Fetched {total_orders} orders (total_entries={pagination.get('total_entries')})", 0, total_orders)
 
     conv_dir = config["cache_dir"] / "conversations"
     conv_dir.mkdir(parents=True, exist_ok=True)
@@ -121,7 +125,7 @@ def main():
             )
 
         target = f"{record['seller_city']} ({record['route_km']} km)" if route else "no route"
-        print(f"[{index}/{len(orders)}] {order.get('title')!r} -> {target}")
+        emit(f"[{index}/{total_orders}] {order.get('title')!r} -> {target}", index, total_orders)
 
     totals = summarize(records, factor)
     payload = {
@@ -131,13 +135,30 @@ def main():
         "totals": totals,
         "orders": records,
     }
-    (config["data_dir"] / "emissions.json").write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False)
+    jsonstore.save(config["data_dir"] / "emissions.json", payload)
+    jsonstore.save(
+        config["data_dir"] / "routes.geojson",
+        {"type": "FeatureCollection", "features": features},
     )
-    (config["data_dir"] / "routes.geojson").write_text(
-        json.dumps({"type": "FeatureCollection", "features": features}, ensure_ascii=False)
-    )
+    emit("Finished", total_orders, total_orders)
+    return payload
 
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compute CO2 emissions for Vinted orders."
+    )
+    parser.add_argument(
+        "fixed_location",
+        help="reference location every order is routed to (e.g. 'Tübingen, DE' or '48.52,9.05')",
+    )
+    args = parser.parse_args()
+
+    def print_progress(message, current=None, total=None):
+        print(message)
+
+    payload = run_pipeline(args.fixed_location, on_progress=print_progress)
+    totals = payload["totals"]
     print(
         f"\nDone. {totals['routed_order_count']}/{totals['order_count']} orders routed, "
         f"{totals['total_distance_km']} km, {totals['total_co2_kg']} kg CO2."

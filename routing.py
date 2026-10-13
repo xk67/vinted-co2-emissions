@@ -1,8 +1,8 @@
-import json
 import time
 from pathlib import Path
 
 import http_client
+import jsonstore
 
 
 class Router:
@@ -14,9 +14,7 @@ class Router:
         self.min_interval = config.get("route_min_interval_seconds", 0.3)
         self._last_call = 0.0
         self.cache_path = Path(config["cache_dir"]) / "routes.json"
-        self.cache = (
-            json.loads(self.cache_path.read_text()) if self.cache_path.exists() else {}
-        )
+        self.cache = jsonstore.load(self.cache_path, {})
 
     @staticmethod
     def _key(origin, destination):
@@ -69,6 +67,4 @@ class Router:
         return result
 
     def _save(self):
-        self.cache_path.write_text(
-            json.dumps(self.cache, indent=2, ensure_ascii=False)
-        )
+        jsonstore.save(self.cache_path, self.cache)
