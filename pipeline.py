@@ -151,7 +151,7 @@ def main():
     )
     parser.add_argument(
         "fixed_location",
-        help="reference location every order is routed to (e.g. 'Tübingen, DE' or '48.52,9.05')",
+        help="reference location every order is routed to (e.g. 'Berlin, DE' or '48.52,9.05')",
     )
     args = parser.parse_args()
 
