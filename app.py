@@ -157,6 +157,7 @@ def status(job_id):
             {
                 "generated_at": payload["generated_at"],
                 "fixed_location": payload["fixed_location"],
+                "truck_factor_kg_per_km": payload["truck_factor_kg_per_km"],
                 "totals": payload["totals"],
                 "equivalents": payload.get("equivalents", []),
                 "orders": payload["orders"],

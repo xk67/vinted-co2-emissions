@@ -15,8 +15,17 @@ const statDistance = document.getElementById("stat-distance");
 const statCo2 = document.getElementById("stat-co2");
 const equivalentsEl = document.getElementById("equivalents");
 const toggleAssumptions = document.getElementById("toggle-assumptions");
+const factorLabel = document.getElementById("truck-factor-label");
+const toggleFactor = document.getElementById("toggle-factor");
+const factorControl = document.getElementById("factor-control");
+const factorSlider = document.getElementById("truck-factor-slider");
 const mapMessage = document.getElementById("map-message");
 const ordersBody = document.getElementById("orders-body");
+const ordersSortSelect = document.getElementById("orders-sort");
+
+let currentPayload = null;
+let truckFactor = 0.9;
+let ordersSort = "default";
 
 const POLL_INTERVAL_MS = 1000;
 const SEARCH_DEBOUNCE_MS = 150;
@@ -57,6 +66,24 @@ function toggleAssumptionsView() {
 }
 
 toggleAssumptions.addEventListener("click", toggleAssumptionsView);
+
+/* ---- truck factor toggle ---- */
+
+function toggleFactorView() {
+  const hidden = factorControl.classList.toggle("hidden");
+  toggleFactor.setAttribute("aria-expanded", String(!hidden));
+  toggleFactor.textContent = hidden ? "Adjust factor" : "Hide factor";
+}
+
+toggleFactor.addEventListener("click", toggleFactorView);
+factorSlider.addEventListener("input", recompute);
+
+/* ---- orders sort ---- */
+
+ordersSortSelect.addEventListener("change", () => {
+  ordersSort = ordersSortSelect.value;
+  renderOrders();
+});
 
 /* ---- city autocomplete ---- */
 function closeSuggestions() {
@@ -152,7 +179,9 @@ function renderEquivalents(list, totalCo2) {
 
     const value = document.createElement("span");
     value.className = "stat-value";
-    value.textContent = formatEquivalentValue(item.value);
+    const initialValue =
+      item.factor_kg_per_unit > 0 ? totalCo2 / item.factor_kg_per_unit : null;
+    value.textContent = formatEquivalentValue(initialValue);
     valueRow.appendChild(value);
 
     if (item.unit) {
@@ -184,9 +213,10 @@ function renderEquivalents(list, totalCo2) {
 
     input.addEventListener("input", () => {
       const factor = parseFloat(input.value);
-      value.textContent = formatEquivalentValue(
-        factor > 0 ? totalCo2 / factor : null
-      );
+      item.factor_kg_per_unit = factor;
+      const computed = factor > 0 ? totalCo2 / factor : null;
+      item.value = computed;
+      value.textContent = formatEquivalentValue(computed);
     });
 
     card.appendChild(base);
@@ -195,17 +225,31 @@ function renderEquivalents(list, totalCo2) {
   }
 }
 
-function renderResults(payload) {
-  const totals = payload.totals;
+function renderTotals(totals) {
   statOrders.textContent = `${totals.routed_order_count} / ${totals.order_count}`;
   statDistance.textContent = formatNumber(totals.total_distance_km, 1);
   statCo2.textContent = formatNumber(totals.total_co2_kg, 1);
-  resultsTitle.textContent = `Orders to ${payload.fixed_location.display_name}`;
+}
 
-  renderEquivalents(payload.equivalents || [], totals.total_co2_kg);
+function byNumber(key, direction) {
+  return (a, b) => {
+    const av = a[key];
+    const bv = b[key];
+    if (av === null || av === undefined) return bv === null || bv === undefined ? 0 : 1;
+    if (bv === null || bv === undefined) return -1;
+    return direction * (av - bv);
+  };
+}
+
+function renderOrders() {
+  const orders = currentPayload ? [...currentPayload.orders] : [];
+  if (ordersSort === "km_desc") orders.sort(byNumber("route_km", -1));
+  else if (ordersSort === "km_asc") orders.sort(byNumber("route_km", 1));
+  else if (ordersSort === "co2_desc") orders.sort(byNumber("co2_kg", -1));
+  else if (ordersSort === "co2_asc") orders.sort(byNumber("co2_kg", 1));
 
   ordersBody.replaceChildren();
-  for (const order of payload.orders) {
+  for (const order of orders) {
     const row = document.createElement("tr");
 
     const title = document.createElement("td");
@@ -218,7 +262,8 @@ function renderResults(payload) {
 
     const km = document.createElement("td");
     km.className = "num";
-    km.textContent = order.route_km === null ? "no route" : formatNumber(order.route_km, 1);
+    km.textContent =
+      order.route_km === null ? "no route" : formatNumber(order.route_km, 1);
     if (order.route_km === null) km.classList.add("muted");
     row.appendChild(km);
 
@@ -230,6 +275,41 @@ function renderResults(payload) {
 
     ordersBody.appendChild(row);
   }
+}
+
+function recompute() {
+  if (!currentPayload) return;
+  truckFactor = parseFloat(factorSlider.value) || 0;
+  factorLabel.textContent = `${truckFactor.toFixed(3)} kg CO₂/km`;
+
+  let total = 0;
+  for (const order of currentPayload.orders) {
+    order.co2_kg =
+      order.route_km === null || order.route_km === undefined
+        ? null
+        : Math.round(order.route_km * truckFactor * 1000) / 1000;
+    if (order.co2_kg !== null) total += order.co2_kg;
+  }
+  currentPayload.totals.total_co2_kg = Math.round(total * 1000) / 1000;
+
+  renderTotals(currentPayload.totals);
+  renderEquivalents(currentPayload.equivalents, currentPayload.totals.total_co2_kg);
+  renderOrders();
+}
+
+function renderResults(payload) {
+  currentPayload = payload;
+  truckFactor =
+    payload.truck_factor_kg_per_km !== undefined
+      ? payload.truck_factor_kg_per_km
+      : truckFactor;
+  factorSlider.value = truckFactor;
+  factorLabel.textContent = `${truckFactor.toFixed(3)} kg CO₂/km`;
+  resultsTitle.textContent = `Orders to ${payload.fixed_location.display_name}`;
+
+  renderTotals(payload.totals);
+  renderEquivalents(payload.equivalents || [], payload.totals.total_co2_kg);
+  renderOrders();
 
   results.classList.remove("hidden");
 }
@@ -256,8 +336,10 @@ function co2Color(value, min, max) {
 function popupHtml(properties) {
   const parts = [`<strong>${escapeHtml(properties.title || "Order")}</strong>`];
   if (properties.seller_city) parts.push(`From: ${escapeHtml(properties.seller_city)}`);
-  if (properties.route_km != null) parts.push(`${formatNumber(properties.route_km, 1)} km`);
-  if (properties.co2_kg != null) parts.push(`${formatNumber(properties.co2_kg, 1)} kg CO₂`);
+  if (properties.route_km != null) {
+    parts.push(`${formatNumber(properties.route_km, 1)} km`);
+    parts.push(`${formatNumber(properties.route_km * truckFactor, 1)} kg CO₂`);
+  }
   return parts.join("<br>");
 }
 
@@ -283,7 +365,7 @@ function drawRoutes(geojson, fixedLocation) {
   for (const feature of geojson.features) {
     const color = co2Color(feature.properties.co2_kg, min, max);
     L.geoJSON(feature, { style: { color, weight: 2, opacity: 0.65 } })
-      .bindPopup(popupHtml(feature.properties))
+      .bindPopup(() => popupHtml(feature.properties))
       .addTo(routeLayer);
 
     const start = feature.geometry.coordinates[0];
@@ -294,7 +376,7 @@ function drawRoutes(geojson, fixedLocation) {
       fillOpacity: 0.9,
       weight: 1,
     })
-      .bindPopup(popupHtml(feature.properties))
+      .bindPopup(() => popupHtml(feature.properties))
       .addTo(routeLayer);
   }
 

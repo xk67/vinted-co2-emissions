@@ -47,6 +47,37 @@ h2 {
   margin: -0.5rem 0 0.75rem;
 }
 
+.subtitle.factor-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 1.75rem 0 0;
+}
+
+.factor-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.factor-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.factor-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -206,6 +237,78 @@ button:disabled {
 .stat-label {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+}
+
+.info::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 165%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 232px;
+  padding: 0.5rem 0.65rem;
+  background: #24313a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 40;
+}
+
+.info:hover::after,
+.info:focus::after {
+  opacity: 1;
+}
+
+.orders-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 2rem 0 0.75rem;
+}
+
+.orders-head h2 {
+  margin: 0;
+}
+
+.sort-control {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.sort-control select {
+  font: inherit;
+  color: var(--text);
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
 }
 
 .equivalent-base {

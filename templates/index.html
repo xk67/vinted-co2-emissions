@@ -54,7 +54,16 @@
         <div class="totals">
           <div class="stat">
             <span class="stat-value" id="stat-orders">–</span>
-            <span class="stat-label">Orders routed</span>
+            <span class="stat-label"
+              >Orders routed<span
+                class="info"
+                tabindex="0"
+                role="note"
+                aria-label="Some orders may be missing: the seller's location can be unavailable, or no road route could be found."
+                data-tip="Not every order can be included. An order is skipped when the seller's location is not available or when no road route to the reference city could be found."
+                >i</span
+              ></span
+            >
           </div>
           <div class="stat">
             <span class="stat-value" id="stat-distance">–</span>
@@ -64,6 +73,35 @@
             <span class="stat-value" id="stat-co2">–</span>
             <span class="stat-label">Total CO2 (kg)</span>
           </div>
+        </div>
+
+        <p class="subtitle small factor-line">
+          <span
+            >Each route is driven in a truck, calculated with
+            <strong id="truck-factor-label">0.900 kg CO₂/km</strong>.</span
+          >
+          <button
+            type="button"
+            id="toggle-factor"
+            class="link-button"
+            aria-expanded="false"
+            aria-controls="factor-control"
+          >
+            Adjust factor
+          </button>
+        </p>
+        <div id="factor-control" class="factor-control hidden">
+          <input
+            id="truck-factor-slider"
+            type="range"
+            min="0.1"
+            max="2"
+            step="0.01"
+            value="0.9"
+          />
+          <span class="factor-scale"
+            ><span>0.1 kg CO₂/km</span><span>2.0 kg CO₂/km</span></span
+          >
         </div>
 
         <div class="equivalents-head">
@@ -85,7 +123,19 @@
         <div id="map" class="map"></div>
         <p id="map-message" class="message"></p>
 
-        <h2 id="results-title">Orders</h2>
+        <div class="orders-head">
+          <h2 id="results-title">Orders</h2>
+          <label class="sort-control">
+            Sort by
+            <select id="orders-sort">
+              <option value="default">Default (shipped)</option>
+              <option value="km_desc">Distance (high → low)</option>
+              <option value="km_asc">Distance (low → high)</option>
+              <option value="co2_desc">CO2 (high → low)</option>
+              <option value="co2_asc">CO2 (low → high)</option>
+            </select>
+          </label>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
