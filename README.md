@@ -52,6 +52,27 @@ The `access_token_web` cookie can be copied from your browser's DevTools
 it when a run reports `401 UNAUTHORIZED`. You can also set the `VINTED_COOKIE`
 environment variable instead of the file.
 
+## Docker
+
+Build the image:
+
+```bash
+docker build -t vinted-co2 .
+```
+
+Run it, passing your Vinted cookie:
+
+```bash
+docker run --rm -p 5000:5000 \
+  -e VINTED_COOKIE="access_token_web=..." \
+  -v "$PWD/data:/app/data" -v "$PWD/cache:/app/cache" \
+  vinted-co2
+```
+
+Then open http://127.0.0.1:5000. The `-v` mounts are optional but keep the
+generated results (`data/`) and the geocode/route caches (`cache/`) between
+runs. The German cities dataset is already baked into the image at build time.
+
 ## Notes and limitations
 
 - **Not all orders can be calculated.** An order is skipped when the seller's

@@ -1,0 +1,13 @@
+.git
+.gitignore
+cache/
+data/
+config.local.json
+config.local.example.json
+__pycache__/
+*.pyc
+image1.png
+image2.png
+README.md
+Dockerfile
+.dockerignore
