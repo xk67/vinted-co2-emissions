@@ -80,3 +80,7 @@ runs. The German cities dataset is already baked into the image at build time.
 - Only **city-level** seller locations are used (no street addresses).
 - Only **German cities** are currently supported (for the reference city and
   the city search).
+
+## License
+
+Released under the [MIT License](LICENSE).
