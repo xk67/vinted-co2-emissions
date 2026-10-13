@@ -1,3 +1,4 @@
+import logging
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -8,6 +9,8 @@ from cities import Cities
 from config import load_config
 from pipeline import run_pipeline
 from vinted_client import AuthError
+
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 app = Flask(__name__)
 CONFIG = load_config()

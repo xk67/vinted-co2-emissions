@@ -27,6 +27,13 @@ def save(path, data):
     """Atomically write JSON to path (temp file + os.replace)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    for stale in path.parent.glob(path.name + ".*.tmp"):
+        try:
+            stale.unlink()
+        except OSError:
+            pass
+
     handle_fd, tmp_name = tempfile.mkstemp(
         dir=str(path.parent), prefix=path.name + ".", suffix=".tmp"
     )
