@@ -4,6 +4,44 @@
 
   "truck_factor_kg_per_km": 0.9,
 
+  "equivalents": [
+    {
+      "key": "car_km",
+      "label": "driving an average petrol car",
+      "unit": "km",
+      "factor_kg_per_unit": 0.171,
+      "source": "UK DEFRA/BEIS conversion factors (average car)"
+    },
+    {
+      "key": "flight_passenger",
+      "label": "a short-haul flight (Berlin-Frankfurt) for one passenger",
+      "unit": "flights",
+      "factor_kg_per_unit": 65.0,
+      "source": "approx. 150 g CO2 per passenger-km over ~435 km"
+    },
+    {
+      "key": "private_jet_hours",
+      "label": "flying a private jet",
+      "unit": "hours",
+      "factor_kg_per_unit": 2412.0,
+      "source": "rough estimate, private jet ~2.4 t CO2 per flight hour"
+    },
+    {
+      "key": "german_resident_years",
+      "label": "the yearly carbon footprint of an average German resident",
+      "unit": "person-years",
+      "factor_kg_per_unit": 10000.0,
+      "source": "Germany ~10 t CO2e per capita per year"
+    },
+    {
+      "key": "tree_years",
+      "label": "CO2 absorbed by one mature tree in a year",
+      "unit": "tree-years",
+      "factor_kg_per_unit": 21.0,
+      "source": "commonly cited ~21 kg CO2 per tree per year"
+    }
+  ],
+
   "nominatim_base_url": "https://nominatim.openstreetmap.org",
   "nominatim_user_agent": "vinted-co2-emissions/0.1 (personal project; contact: none)",
   "geocode_min_interval_seconds": 1.1,

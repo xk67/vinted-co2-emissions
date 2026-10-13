@@ -13,6 +13,8 @@ const resultsTitle = document.getElementById("results-title");
 const statOrders = document.getElementById("stat-orders");
 const statDistance = document.getElementById("stat-distance");
 const statCo2 = document.getElementById("stat-co2");
+const equivalentsEl = document.getElementById("equivalents");
+const toggleAssumptions = document.getElementById("toggle-assumptions");
 const ordersBody = document.getElementById("orders-body");
 
 const POLL_INTERVAL_MS = 1000;
@@ -45,8 +47,17 @@ function formatNumber(value, digits = 2) {
   });
 }
 
-/* ---- city autocomplete ---- */
+/* ---- assumptions toggle ---- */
 
+function toggleAssumptionsView() {
+  const shown = equivalentsEl.classList.toggle("show-base");
+  toggleAssumptions.setAttribute("aria-expanded", String(shown));
+  toggleAssumptions.textContent = shown ? "Hide assumptions" : "Adjust assumptions";
+}
+
+toggleAssumptions.addEventListener("click", toggleAssumptionsView);
+
+/* ---- city autocomplete ---- */
 function closeSuggestions() {
   suggestions.classList.add("hidden");
   suggestions.replaceChildren();
@@ -123,12 +134,74 @@ cityInput.addEventListener("blur", () => {
 
 /* ---- results ---- */
 
+function formatEquivalentValue(value) {
+  if (value === null || value === undefined || !isFinite(value)) return "–";
+  const digits = Math.abs(value) >= 100 ? 0 : 1;
+  return formatNumber(value, digits);
+}
+
+function renderEquivalents(list, totalCo2) {
+  equivalentsEl.replaceChildren();
+  for (const item of list) {
+    const card = document.createElement("div");
+    card.className = "stat equivalent";
+
+    const valueRow = document.createElement("span");
+    valueRow.className = "stat-value-row";
+
+    const value = document.createElement("span");
+    value.className = "stat-value";
+    value.textContent = formatEquivalentValue(item.value);
+    valueRow.appendChild(value);
+
+    if (item.unit) {
+      const unit = document.createElement("span");
+      unit.className = "stat-unit";
+      unit.textContent = item.unit;
+      valueRow.appendChild(unit);
+    }
+    card.appendChild(valueRow);
+
+    const label = document.createElement("span");
+    label.className = "stat-label";
+    label.textContent = item.label;
+    card.appendChild(label);
+
+    const base = document.createElement("label");
+    base.className = "equivalent-base";
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.step = "any";
+    input.value = item.factor_kg_per_unit;
+    base.appendChild(input);
+
+    const suffix = document.createElement("span");
+    suffix.textContent = "kg CO₂ per unit";
+    base.appendChild(suffix);
+
+    input.addEventListener("input", () => {
+      const factor = parseFloat(input.value);
+      value.textContent = formatEquivalentValue(
+        factor > 0 ? totalCo2 / factor : null
+      );
+    });
+
+    card.appendChild(base);
+    if (item.source) card.title = `Source: ${item.source}`;
+    equivalentsEl.appendChild(card);
+  }
+}
+
 function renderResults(payload) {
   const totals = payload.totals;
   statOrders.textContent = `${totals.routed_order_count} / ${totals.order_count}`;
   statDistance.textContent = formatNumber(totals.total_distance_km, 1);
   statCo2.textContent = formatNumber(totals.total_co2_kg, 1);
   resultsTitle.textContent = `Orders to ${payload.fixed_location.display_name}`;
+
+  renderEquivalents(payload.equivalents || [], totals.total_co2_kg);
 
   ordersBody.replaceChildren();
   for (const order of payload.orders) {

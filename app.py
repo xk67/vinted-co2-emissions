@@ -148,6 +148,7 @@ def status(job_id):
                 "generated_at": payload["generated_at"],
                 "fixed_location": payload["fixed_location"],
                 "totals": payload["totals"],
+                "equivalents": payload.get("equivalents", []),
                 "orders": payload["orders"],
             }
         )

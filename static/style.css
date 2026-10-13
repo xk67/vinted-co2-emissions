@@ -42,6 +42,11 @@ h2 {
   margin: 0 0 1.5rem;
 }
 
+.subtitle.small {
+  font-size: 0.82rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -186,9 +191,77 @@ button:disabled {
   color: var(--accent-dark);
 }
 
+.stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.stat-unit {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .stat-label {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+.equivalent-base {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+#equivalents.show-base .equivalent-base {
+  display: flex;
+}
+
+.equivalents-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0 0.25rem;
+}
+
+.equivalents-head h2 {
+  margin: 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent-dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-button:hover {
+  color: var(--accent);
+}
+
+.equivalent-base input {
+  width: 5.5rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.equivalent-base input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
 }
 
 .table-wrap {

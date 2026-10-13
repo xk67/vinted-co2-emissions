@@ -3,7 +3,7 @@ import datetime
 
 import jsonstore
 from config import load_config
-from emissions import co2_kg, summarize
+from emissions import co2_kg, equivalents, summarize
 from geo import Geocoder
 from routing import Router
 from vinted_client import VintedClient
@@ -133,6 +133,7 @@ def run_pipeline(fixed_location, config=None, on_progress=None, fixed_point=None
         "fixed_location": fixed,
         "truck_factor_kg_per_km": factor,
         "totals": totals,
+        "equivalents": equivalents(totals["total_co2_kg"], config.get("equivalents", [])),
         "orders": records,
     }
     jsonstore.save(config["data_dir"] / "emissions.json", payload)

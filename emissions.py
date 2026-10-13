@@ -16,3 +16,28 @@ def summarize(orders, truck_factor_kg_per_km):
         "total_co2_kg": round(total_co2_kg, 3),
         "truck_factor_kg_per_km": truck_factor_kg_per_km,
     }
+
+
+def equivalents(total_co2_kg, definitions):
+    """Express a CO2 amount as familiar comparisons.
+
+    Each definition provides a factor in kg CO2 per one unit; the equivalent
+    count is total_co2_kg / factor.
+    """
+    results = []
+    for item in definitions:
+        factor = item.get("factor_kg_per_unit")
+        if not factor:
+            continue
+        results.append(
+            {
+                "key": item["key"],
+                "label": item["label"],
+                "unit": item.get("unit", ""),
+                "factor_kg_per_unit": factor,
+                "value": round(total_co2_kg / factor, 1),
+                "source": item.get("source"),
+            }
+        )
+    return results
+
