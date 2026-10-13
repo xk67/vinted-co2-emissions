@@ -264,6 +264,15 @@ button:disabled {
   border-color: var(--accent);
 }
 
+.map {
+  height: 480px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #e8ecee;
+  z-index: 1;
+}
+
 .table-wrap {
   overflow-x: auto;
   background: var(--card);

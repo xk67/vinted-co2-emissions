@@ -2,7 +2,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_file
 
 from cities import Cities
 from config import load_config
@@ -84,6 +84,16 @@ def cities():
             ]
         }
     )
+
+
+@app.get("/api/routes")
+def routes():
+    path = CONFIG["data_dir"] / "routes.geojson"
+    if not path.exists():
+        return jsonify({"error": "no routes available"}), 404
+    response = send_file(path, mimetype="application/json")
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.post("/api/calculate")

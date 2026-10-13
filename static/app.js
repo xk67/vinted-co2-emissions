@@ -15,6 +15,7 @@ const statDistance = document.getElementById("stat-distance");
 const statCo2 = document.getElementById("stat-co2");
 const equivalentsEl = document.getElementById("equivalents");
 const toggleAssumptions = document.getElementById("toggle-assumptions");
+const mapMessage = document.getElementById("map-message");
 const ordersBody = document.getElementById("orders-body");
 
 const POLL_INTERVAL_MS = 1000;
@@ -233,6 +234,104 @@ function renderResults(payload) {
   results.classList.remove("hidden");
 }
 
+/* ---- map ---- */
+
+let leafletMap = null;
+let routeLayer = null;
+
+function escapeHtml(text) {
+  return String(text).replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])
+  );
+}
+
+function co2Color(value, min, max) {
+  if (typeof value !== "number" || max === min) return "#0a8f6c";
+  const t = Math.min(Math.max((value - min) / (max - min), 0), 1);
+  return `hsl(${Math.round(120 * (1 - t))}, 70%, 45%)`;
+}
+
+function popupHtml(properties) {
+  const parts = [`<strong>${escapeHtml(properties.title || "Order")}</strong>`];
+  if (properties.seller_city) parts.push(`From: ${escapeHtml(properties.seller_city)}`);
+  if (properties.route_km != null) parts.push(`${formatNumber(properties.route_km, 1)} km`);
+  if (properties.co2_kg != null) parts.push(`${formatNumber(properties.co2_kg, 1)} kg CO₂`);
+  return parts.join("<br>");
+}
+
+function drawRoutes(geojson, fixedLocation) {
+  if (!leafletMap) {
+    leafletMap = L.map("map");
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(leafletMap);
+  }
+
+  if (routeLayer) routeLayer.remove();
+  routeLayer = L.featureGroup().addTo(leafletMap);
+
+  const values = geojson.features
+    .map((feature) => feature.properties.co2_kg)
+    .filter((value) => typeof value === "number");
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  for (const feature of geojson.features) {
+    const color = co2Color(feature.properties.co2_kg, min, max);
+    L.geoJSON(feature, { style: { color, weight: 2, opacity: 0.65 } })
+      .bindPopup(popupHtml(feature.properties))
+      .addTo(routeLayer);
+
+    const start = feature.geometry.coordinates[0];
+    L.circleMarker([start[1], start[0]], {
+      radius: 3,
+      color,
+      fillColor: color,
+      fillOpacity: 0.9,
+      weight: 1,
+    })
+      .bindPopup(popupHtml(feature.properties))
+      .addTo(routeLayer);
+  }
+
+  if (fixedLocation && typeof fixedLocation.lat === "number") {
+    L.circleMarker([fixedLocation.lat, fixedLocation.lon], {
+      radius: 8,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: "#0a8f6c",
+      fillOpacity: 1,
+    })
+      .bindPopup(`<strong>Reference</strong><br>${escapeHtml(fixedLocation.display_name)}`)
+      .addTo(routeLayer);
+  }
+
+  if (routeLayer.getLayers().length) {
+    leafletMap.fitBounds(routeLayer.getBounds(), { padding: [24, 24] });
+  }
+  setTimeout(() => leafletMap.invalidateSize(), 0);
+}
+
+async function renderMap(fixedLocation) {
+  mapMessage.textContent = "";
+  try {
+    const response = await fetch("/api/routes");
+    if (!response.ok) throw new Error("no routes available yet");
+    const geojson = await response.json();
+    if (!geojson.features || !geojson.features.length) {
+      mapMessage.textContent = "No routes to display.";
+      return;
+    }
+    drawRoutes(geojson, fixedLocation);
+  } catch (error) {
+    mapMessage.textContent = `Map unavailable: ${error.message}`;
+  }
+}
+
 async function pollStatus(jobId) {
   try {
     const response = await fetch(`/api/status/${jobId}`);
@@ -250,6 +349,7 @@ async function pollStatus(jobId) {
     if (data.status === "done") {
       setMessage("Done.");
       renderResults(data);
+      renderMap(data.fixed_location);
     } else {
       setMessage(`Error: ${data.error}`);
     }
