@@ -1,6 +1,6 @@
 {
   "vinted_base_url": "https://www.vinted.de",
-  "vinted_user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+  "vinted_user_agent": "vinted-co2-emissions",
 
   "truck_factor_kg_per_km": 0.9,
 
@@ -43,7 +43,7 @@
   ],
 
   "nominatim_base_url": "https://nominatim.openstreetmap.org",
-  "nominatim_user_agent": "vinted-co2-emissions/0.1 (personal project; contact: none)",
+  "nominatim_user_agent": "vinted-co2-emissions (personal project; contact: none)",
   "geocode_min_interval_seconds": 1.1,
 
   "geonames_germany_url": "https://download.geonames.org/export/dump/DE.zip",

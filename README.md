@@ -4,6 +4,10 @@ Estimate the **CO₂ emissions** of your Vinted orders. Every order is routed by
 road from the **seller's city** to a reference city you choose, and the driven
 distance is converted to truck CO₂ emissions.
 
+> **Note:** This tool accesses Vinted through an unofficial API with your own
+> session cookie, which violates [Vinted's Terms of Service](https://www.vinted.com/terms-and-s).
+> Use it at your own risk; the worst case is that your account gets suspended.
+
 ## Screenshots
 
 Results, relatable comparisons and the adjustable emission factor:
